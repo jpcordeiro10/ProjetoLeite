@@ -69,7 +69,7 @@ SENSORES dados;
 /* --- Struct para envio --- */
 typedef struct struct_message {
     float Temperatura;
-    float Volume;
+    float Volume = 0;
 } struct_message;
 struct_message Readings;
 /* --- Struct para recebimento --- */
@@ -125,27 +125,6 @@ void InicializaCartao(){ // Tem que trocar o numero dentro do SD begin de acordo
     }
     myFile.close();
 }
-/* void InicializaEspNow(){ // Funcao responsavel por inicializar o EspNow
-    WiFi.mode(WIFI_STA);
-    Serial.println();
-    Serial.println(WiFi.macAddress());
-    
-    if (esp_now_init() != ESP_OK) {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-    // register peer
-    esp_now_peer_info_t peerInfo;
-
-    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-    peerInfo.channel = 0;  
-    peerInfo.encrypt = false;
-            
-    if (esp_now_add_peer(&peerInfo) != ESP_OK){
-    Serial.println("Failed to add peer");
-    return;
-    }
-} */
 // Leitura do modulo GPS
 void LeituraGPS(){ // Funcao que realiza a leitura da string de dados obtida pelo modulo GPS e grava na Struct
     Serial.println("GPS");
@@ -219,10 +198,10 @@ void LeituraTemperatura(){ // Faz a leitura e a correcao da temperatura
         TemperaturaLida = sensors.getTempCByIndex(0);
         Acumulador = TemperaturaLida + Acumulador;
     }
-    MediaTemp = Acumulador / 10;
-    Readings.Temperatura = MediaTemp;
-    TemperaturaCaminhao = MediaTemp;
-    dados.temperatura_caminhao = TemperaturaCaminhao;
+    MediaTemp = Acumulador / NUMERODEMEDIDAS; //Calcula a media de temperatura
+    Readings.Temperatura = MediaTemp; // Grava a media de temperatura na Struct de envio
+    TemperaturaCaminhao = MediaTemp; // Muda a temperatura de variavel
+    dados.temperatura_caminhao = TemperaturaCaminhao; // Grava a temperatura do caminhao na Struct de gravação de arquivo
     Serial.print("Temperatura Lida [L]: ");
     Serial.println(TemperaturaLida);   
     Serial.print("Temperatura Media [L]: ");
@@ -276,11 +255,11 @@ void onReceiveData(const uint8_t *mac, const uint8_t *data, int len) {
   
   memcpy(&Recebimento, data, sizeof(Recebimento));
   TemperaturaTanque = Recebimento.Temperatura; // Recebe a temperatura do caminhao
-  Volume = Recebimento.Volume;
-  CorrecaoTemp = TemperaturaCaminhao - TemperaturaTanque;
-  dados.temperatura_tanque = TemperaturaTanque;  
-  dados.volume_tanque = Volume;
-  DadosRecebidos = true;
+  Volume = Recebimento.Volume; // Recebe o volume do tanque e grava
+  CorrecaoTemp = TemperaturaCaminhao - TemperaturaTanque; // Corrige a temperatura
+  dados.temperatura_tanque = TemperaturaTanque; // Grava a temperatura do tanque do produtor na Struct de gravacao 
+  dados.volume_tanque = Volume; // Grava o volume do tanque na Struct de gravacao
+  DadosRecebidos = true; // Flag de dados recebidos 
 }
 void setup (){
     // UART com o monitor serial do PC
@@ -308,16 +287,10 @@ void setup (){
     return;
     }
     InicializaCartao();
-   /*   InicializaEspNow();
-*/
 }
 
 void loop(){
-  Serial.println(DadosRecebidos);
-    if(DadosRecebidos == true){
-        LeituraGPS();
-        }
-
+    LeituraGPS();
     /* --- Envio das leituras --- */
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &Readings, sizeof(Readings));
     if (result == ESP_OK) {
