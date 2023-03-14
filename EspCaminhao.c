@@ -32,7 +32,7 @@ SPIClass sd_spi = SPIClass(3);
 /* ---- Operadores Logicos */
 #define true 1
 #define false 0
-int DadosRecebidos = false;
+int Envia, Recebe;
 /* --- Objetos das bibliotecas --- */
 // Temperatura    
     OneWire oneWire(oneWireBus);
@@ -194,6 +194,7 @@ void LeituraTemperatura(){ // Faz a leitura e a correcao da temperatura
     sensors.getTempCByIndex(0);
 
     int i;
+    Acumulador = 0;
     for (i = 0; i <= NUMERODEMEDIDAS; i++){ // Pode alterar as medidas no define
         TemperaturaLida = sensors.getTempCByIndex(0);
         Acumulador = TemperaturaLida + Acumulador;
@@ -205,7 +206,8 @@ void LeituraTemperatura(){ // Faz a leitura e a correcao da temperatura
     Serial.print("Temperatura Lida [L]: ");
     Serial.println(TemperaturaLida);   
     Serial.print("Temperatura Media [L]: ");
-    Serial.println(TemperaturaCaminhao);   
+    Serial.println(TemperaturaCaminhao);
+    Envia = 1;  
 }
 
 // Gravacao de dados no cartao SD
@@ -241,7 +243,7 @@ void GravacaoDeDados(){ // Funcao que realiza a gravacao da Struct dentro de um 
             Serial.println("Gravou");
             }
     myFile.close();
-    DadosRecebidos = false;
+    
 }
 
 void onReceiveData(const uint8_t *mac, const uint8_t *data, int len) {
@@ -259,7 +261,7 @@ void onReceiveData(const uint8_t *mac, const uint8_t *data, int len) {
   CorrecaoTemp = TemperaturaCaminhao - TemperaturaTanque; // Corrige a temperatura
   dados.temperatura_tanque = TemperaturaTanque; // Grava a temperatura do tanque do produtor na Struct de gravacao 
   dados.volume_tanque = Volume; // Grava o volume do tanque na Struct de gravacao
-  DadosRecebidos = true; // Flag de dados recebidos 
+ 
 }
 void setup (){
     // UART com o monitor serial do PC
@@ -292,18 +294,27 @@ void setup (){
 void loop(){
     LeituraGPS();
     /* --- Envio das leituras --- */
-    esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &Readings, sizeof(Readings));
-    if (result == ESP_OK) {
-    Serial.println("Sent with success");
-    } else {
-    Serial.println("Error sending the data");
+    if(Envia == 1){
+        esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &Readings, sizeof(Readings));
+        if (result == ESP_OK) {
+        Serial.println("Sent with success");
+        } else {
+        Serial.println("Error sending the data");
+        }
+        Envia = 0;
+        Recebe = 1;
     }
     /* ------------------------ */
     /* --- Recebimento ------- */
-    if (esp_now_init() != ESP_OK) {
-    Serial.println("Error initializing ESP-NOW");
-    return;
+    
+    if(Recebe == 1){
+        if (esp_now_init() != ESP_OK) {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+        }
+        Recebe = 0;
+        Envio = 1;
+        esp_now_register_recv_cb(onReceiveData);
     }
-    esp_now_register_recv_cb(onReceiveData);
     /* ---------------------- */
 }
