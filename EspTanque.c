@@ -105,17 +105,17 @@ void LeituraTemperatura(){ // Faz a leitura e a correcao da temperatura
     sensors.getTempCByIndex(0);
 
     int i;
+    Acumulador = 0;
     for (i = 0; i <= NUMERODEMEDIDAS; i++){ // Pode alterar as medidas no define
         TemperaturaLida = sensors.getTempCByIndex(0);
         Acumulador = TemperaturaLida + Acumulador;
-        Serial.print("Temperatura: ");
-        Serial.print(TemperaturaLida);
+        
     }
     MediaTemp = Acumulador / NUMERODEMEDIDAS;
     Readings.Temperatura = MediaTemp;
     TemperaturaTanque = MediaTemp;
     Serial.print("Temperatura: ");
-    Serial.print(TemperaturaTanque);    
+    Serial.println(TemperaturaTanque);    
 }
 // Funcao abaixo realiza o recebimento dos dados
 void onReceiveData(const uint8_t *mac, const uint8_t *data, int len) {
