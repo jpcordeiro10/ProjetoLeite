@@ -232,7 +232,7 @@ void GravacaoDeDados(){ // Funcao que realiza a gravacao da Struct dentro de um 
             myFile.print(",");
             myFile.print(dados.velocidade);
             myFile.print(",");
-            myFile.println(dados.numero_de_satelites);
+            myFile.print(dados.numero_de_satelites);
             myFile.print(",");
             myFile.print(dados.volume_tanque);
             myFile.print(",");
