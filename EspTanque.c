@@ -77,27 +77,6 @@ void InicializaLaser(){ // Funcao para inicialização do sensor a laser
     while(1);
     }
 }
-void InicializaEspNow(){ // Funcao responsavel por inicializar o EspNow
-//    WiFi.mode(WIFI_STA);
-//    Serial.println();
-//    Serial.println(WiFi.macAddress());
-//    
-//    if (esp_now_init() != ESP_OK) {
-//    Serial.println("Error initializing ESP-NOW");
-//    return;
-//  }
-//    // register peer
-//    esp_now_peer_info_t peerInfo;
-//
-//    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-//    peerInfo.channel = 0;  
-//    peerInfo.encrypt = false;
-//            
-//    if (esp_now_add_peer(&peerInfo) != ESP_OK){
-//    Serial.println("Failed to add peer");
-//    return;
-//    }
-}
 void LeituraLaser(){ // Leitura do sensor a laser
     VL53L0X_RangingMeasurementData_t measure;
 
@@ -116,8 +95,8 @@ void CalculoVolumeTanque(){
         
     h = ALTURA_TANQUE - distancia; // altura do líquido
     area_tanque = ((PI_APROXIMADO * (r*r))/2);
-    Readings.Volume = Volume;
     Volume = ((h * area_tanque)/1000); // volume final calculado em litros [L]
+    Readings.Volume = Volume;   
     Serial.print("Volume(L): ");
     Serial.println(Volume);
 }
@@ -131,14 +110,12 @@ void LeituraTemperatura(){ // Faz a leitura e a correcao da temperatura
         Acumulador = TemperaturaLida + Acumulador;
         Serial.print("Temperatura: ");
         Serial.print(TemperaturaLida);
-        delay(300);
     }
-    MediaTemp = Acumulador / 10;
+    MediaTemp = Acumulador / NUMERODEMEDIDAS;
     Readings.Temperatura = MediaTemp;
     TemperaturaTanque = MediaTemp;
     Serial.print("Temperatura: ");
-    Serial.print(TemperaturaTanque);   
-    
+    Serial.print(TemperaturaTanque);    
 }
 // Funcao abaixo realiza o recebimento dos dados
 void onReceiveData(const uint8_t *mac, const uint8_t *data, int len) {
@@ -177,9 +154,6 @@ void setup(){
     Serial.println("Failed to add peer");
     return;
     }
-
-    
-//    InicializaEspNow();
     
 }
 
@@ -204,6 +178,4 @@ void loop(){
     }
     esp_now_register_recv_cb(onReceiveData);
     /* ---------------------- */
-//    delay(500);
-
 }
